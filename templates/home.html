@@ -6,8 +6,19 @@
     <title>Bible Reference</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDFLnUQcWcPCurZdF-WKLvXXNhJrjDjxCM&callback=loadGoogleMaps" async defer></script>
-    
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDFLnUQcWcPCurZdF-WKLvXXNhJrjDjxCM&callback=initGoogleMaps" async defer></script>
+
+    <script>
+        // Callback function for Google Maps API
+        function initGoogleMaps() {
+            console.log("Google Maps API loaded");
+            // If locations are already available, initialize the map
+            if (window.mapLocations && window.mapLocations.length > 0) {
+                initMap(window.mapLocations);
+            }
+        }
+    </script>
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             console.log("DOM fully loaded and parsed");
@@ -619,15 +630,19 @@
             if (locationsMatch && locationsMatch[1]) {
                 const locations = locationsMatch[1].split(',').map(loc => loc.trim()).filter(loc => loc.length > 0);
                 if (locations.length > 0) {
+                    console.log("Locations found:", locations);
                     // Store locations and set callback for map initialization
                     window.mapLocations = locations;
                     if (typeof google !== 'undefined' && google.maps) {
+                        console.log("Google Maps already loaded, initializing map");
                         initMap(window.mapLocations);
                     } else {
-                        // If Google Maps API is not yet loaded, wait for it
-                        window.initMapCallback = () => initMap(window.mapLocations);
+                        console.log("Google Maps not yet loaded, waiting for callback");
+                        // Google Maps will call initGoogleMaps when ready
                     }
                 }
+            } else {
+                console.log("No locations found in analysis text");
             }
 
 
