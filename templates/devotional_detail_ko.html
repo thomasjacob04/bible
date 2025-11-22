@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>오늘의 묵상</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+    <style>
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #f8f8f8;
+            flex-direction: column;
+        }
+
+        .header-container h1 {
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 24rem;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        .flip-card {
+            perspective: 1000px;
+            aspect-ratio: 3/4;
+            width: 100%;
+            cursor: pointer;
+        }
+
+        .flip-card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            transition: transform 0.7s;
+            transform-style: preserve-3d;
+        }
+
+        .flip-card.flipped .flip-card-inner {
+            transform: rotateY(180deg);
+        }
+
+        .flip-card-front,
+        .flip-card-back {
+            position: absolute;
+            width: 100%;
+            height: 520px;
+            max-height: 100%;
+            backface-visibility: hidden;
+            border-radius: 0.75rem;
+            overflow: hidden;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        .card-content {
+            width: 100%;
+            height: 100%;
+            padding: 1.5rem;
+            box-sizing: border-box;
+            background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.7)), 
+                            url('https://images.unsplash.com/photo-1495616811223-4d98c6e9c869?q=80&w=1920');
+            background-size: cover;
+            background-position: center;
+            color: white;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card-header {
+            margin-bottom: auto;
+            color:white;
+
+        }
+
+        .flip-card-back {
+            transform: rotateY(180deg);
+        }
+
+        .flip-card-back .card-content {
+            background-image: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.8)), 
+                            url('https://images.unsplash.com/photo-1495616811223-4d98c6e9c869?q=80&w=1920');
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .header {
+            margin-bottom: auto;
+        }
+
+        .title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: white;
+            margin: 0 0 0.5rem 0;
+        }
+
+        .description {
+            font-size: 0.875rem;
+            opacity: 0.9;
+            margin: 0;
+        }
+
+        .verse {
+            margin-bottom: auto;
+        }
+
+        .verses {
+            color: #333;
+            margin-bottom: 6rem;
+        }
+
+        .verse-text {
+            font-size: 1.2rem;
+            font-style: italic;
+            margin: 0 0 0.5rem 0;
+            color: white;
+        }
+
+        .verse-reference {
+            font-size: 1rem;
+            margin: 0 0 1rem 0;
+        }
+
+        .verse-context {
+            font-size: 0.875rem;
+            opacity: 0.9;
+            margin: 0 0 1rem 0;
+        }
+
+        .flip-indicator {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.875rem;
+            opacity: 0.75;
+        }
+
+        .chevron {
+            width: 20px;
+            height: 20px;
+            margin-right: 0.25rem;
+        }
+
+        .bounce {
+            animation: bounce 1s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-25%);
+            }
+        }
+
+        .prayer-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin: 0 0 1rem 0;
+        }
+
+        .prayer-text {
+            font-size: 1.125rem;
+            font-style: italic;
+            margin: 0 0 2rem 0;
+        }
+
+        .story {
+            margin-top: 2rem;
+            color: #333;
+        }
+
+        .story h2 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin: 0 0 0.5rem 0;
+        }
+
+        .story h3 {
+            font-size: 1.125rem;
+            margin: 0 0 0.5rem 0;
+        }
+
+        .story p {
+            margin: 0 0 0.5rem 0;
+            font-size: 16px;
+            color: #333;
+        }
+
+        .story .reference {
+            font-size: 0.875rem;
+            color: #9CA3AF;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="header-container">
+        <h1>오늘의 묵상</h1>
+    </div>
+    <div class="container">
+        <div class="flip-card">
+            <div class="flip-card-inner">
+                <!-- Front of card -->
+                <div class="flip-card-front">
+                    <div class="card-content">
+                        <div class="card-header">
+                            <h2 class="title">{{ devotional.name }}</h2>
+                            <p class="description">{{ devotional.description }}</p>
+                        </div>
+                        
+                        <div class="verse">
+                            <p class="verse-text">{{ bible_verse.text }}</p><br>
+                            <p class="verse-reference">{{ bible_verse.reference }}</p>
+                        </div>
+                        <!-- <p class="verse-context">When anxiety weighs on your heart, remember that you're not meant to carry these burdens alone.</p> -->
+
+
+                        <div class="flip-indicator">
+                            <svg class="chevron bounce" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M6 9l6 6 6-6"/>
+                            </svg>
+                            <span>Tap for prayer</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Back of card -->
+                <div class="flip-card-back">
+                    <div class="card-content">
+                        <h3 class="prayer-title">기도</h3>
+                        <p class="prayer-text">{{ bible_verse.prayer }}</p>
+                        
+                        <div class="flip-indicator">
+                            <svg class="chevron" style="transform: rotate(180deg)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M6 9l6 6 6-6"/>
+                            </svg>
+                            <span>Tap for verse</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Story Section -->
+        <div class="story">
+            <h2>이야기</h2>
+            <div class="verses"><p>{{ bible_verse.short_story }}</p></div>
+        </div>
+    </div>
+
+    <div class="bottom-menu">
+        <a href="{{ url_for('home_ko') }}">
+            <span class="icon"><i class="fa-solid fa-church"></i></span>
+        </a>
+        <a href="{{ url_for('books_ko') }}">
+            <span class="icon"><i class="fa-solid fa-book-open"></i></span>
+        </a>
+        <a href="{{ url_for('devotionals_ko') }}">
+            <span class="icon active"><i class="fa-solid fa-star-of-life"></i></span>
+        </a>
+    </div>
+
+    <script>
+        document.querySelector('.flip-card').addEventListener('click', function() {
+            this.classList.toggle('flipped');
+        });
+    </script>
+    
+</body>
+</html>

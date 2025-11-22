@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Support</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <style>
+        .container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+h1, h2 {
+    color: #333;
+}
+
+p {
+    font-size: 1rem;
+    line-height: 1.6;
+    color: #666;
+}
+        form {
+    margin-top: 2rem;
+    margin: 0 auto;
+    align-items: center;
+    width: 66vw;
+    max-width: 300px;
+}
+
+label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: bold;
+}
+
+input, textarea {
+    width: 100% !important;
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size:14px;
+}
+
+button {
+    padding: 0.75rem 1.5rem;
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #0056b3;
+}       
+    </style>
+    <div class="container">
+        <h1>정원을 통합하세요</h1>
+            <!-- Display flash messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="flash-message {{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+        <h3>광고 없음, 방해 없음, 오직 말씀 묵상만.</h3>
+        <p>이 앱은 시드니에 사는 교회 성도들이 만든 것으로, 완전히 무료이며 광고 없이 운영됩니다.</p>
+        <p><strong>Future Plans:</strong> 
+            mybible.au 도메인을 통해 누구나 이용 가능하도록 제공 예정 ($25/년)
+            하루 100,000회 접속을 처리할 수 있는 Python 서버 운영 ($96/년)
+            <br>네팔어 지원 추가
+            <br>주제별 성경 읽기 페이지 추가
+            <br>주일 설교 본문: 설교에 사용된 구절들을 한눈에 쉽게 볼 수 있도록 제공
+            <br>이 앱만을 위한 전용 e-리더기 개발
+            <br>Korean Translation: Mbart Large by Facebook. 
+
+        </p>
+        <p><strong>Powered by:</strong> 
+            <br>기술: LangChain, Python, HTML, CSS
+            <br>성경: 영어 - King James Version (1769), 한국어 - 개역성경 (KRV)
+            <br>AI 모델: mixtral-8x7b-32768. 이 모델은 HuggingFace에서 개발된 AI 기술로, 총 450억 개의 매개변수와 32,768 토큰의 컨텍스트 창을 지원합니다.
+    <br>Korean Translation: Mbart Large by Facebook. 
+    <br>Nepali Translation: Mixtral-8x7b by Mistral AI.
+</p>
+
+        <p><strong>함께할 수 있는 방법:</strong> 아래의 피드백 양식을 통해 의견을 남겨주세요.
+            또는 서버 비용, 도메인 유지비, 커피 한 잔 후원을 통해 도움을 주실 수 있습니다.
+            PayId: 0449694492
+            </p>
+            <p><strong>Immediately in need of:</strong> 
+                Well-tested and reliable opensource language models specialised in translating: Korean, Nepali and Malayalam 
+                <br> Reliable digital Bible (API or Database) for Nepali and Malayalam NKJV or KJV.
+                <br> Korean, Nepali and Malayalam speaking testers for the app.
+            </p>
+        
+        <h2>피드백 양식</h2>
+        <form method="POST" action="{{ url_for('send_sms') }}">
+            <label for="name">Name:</label>
+            <input type="text" id="name" name="name" required>
+            
+            <label for="email">Email:</label>
+            <input class="user-input" type="email" id="email" name="email" required>
+            
+            <label for="message">Message:</label>
+            <textarea id="message" name="message" rows="4" required></textarea>
+            <br>
+            <button type="submit" class="button">Send Feedback</button>
+        </form>
+    </div>
+    <div class="bottom-menu">
+        <a href="/home_ko">
+            <span class="icon active"><i class="fa-solid fa-church"></i></span>
+        </a>
+        <a href="/books_ko">
+            <span class="icon"><i class="fa-solid fa-book-open"></i></span>
+        </a>
+    </div>
+    <footer>
+        <p>이 앱은 시드니에 사는 교회 성도들이 만든 것으로</p>
+        <a href="https://tomj.tech/" target="_blank">tom's tech </a>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>성경 참조</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("DOM fully loaded and parsed");
+            replaceMBART_ko('analysis');
+            replaceMBART_ko('explanation');
+            // replaceMBART_ko('related-verses');
+            underlineBibleVerses('related-verses');
+
+            document.body.addEventListener('click', function(event) {
+                console.log("Click detected on body");  // Debugging statement
+                if (event.target.classList.contains('bible-verse')) {
+                    console.log("Bible verse clicked");  // Debugging statement
+                    const book = event.target.getAttribute('data-book');
+                    const chapter = event.target.getAttribute('data-chapter');
+                    const verse = event.target.getAttribute('data-verse');
+                    console.log(`Fetching verse: ${book} ${chapter}:${verse}`);
+                    fetchVerse(book, chapter, verse, event.target, event);
+                }
+            });
+
+            const btnEn = document.getElementById('btn-en');
+            const btnKo = document.getElementById('btn-ko');
+            const btnMl = document.getElementById('btn-mal');
+            const btnNe = document.getElementById('btn-ne');
+
+            if (btnEn) {
+                btnEn.addEventListener('click', function() {
+                    setLanguage('en');
+                });
+            }
+
+            if (btnKo) {
+                btnKo.addEventListener('click', function() {
+                    setLanguage('ko');
+                });
+            }
+
+            if (btnMl) {
+                btnMl.addEventListener('click', function() {
+                    setLanguage('mal');
+                });
+            }
+
+            if (btnNe) {
+                btnNe.addEventListener('click', function() {
+                    setLanguage('ne');
+                });
+            }
+            
+
+            // Autosuggest functionality
+            // const referenceInput = document.getElementById('reference');
+            // referenceInput.addEventListener('input', function() {
+            //     const query = this.value;
+            //     if (query.length > 0) {
+            //         fetch(`/get_books?query=${query}`)
+            //             .then(response => {
+            //                 if (!response.ok) {
+            //                     throw new Error('Network response was not ok');
+            //                 }
+            //                 return response.json();
+            //             })
+            //             .then(data => {
+            //                 if (Array.isArray(data)) {
+            //                     const suggestions = data.filter(book => book.toLowerCase().startsWith(query.toLowerCase()));
+            //                     showSuggestions(suggestions);
+            //                 } else {
+            //                     console.error('Data is not an array');
+            //                 }
+            //             })
+            //             .catch(error => {
+            //                 console.error('Fetch error:', error);
+            //             });
+            //     } else {
+            //         clearSuggestions();
+            //     }
+            // });
+
+            // function showSuggestions(suggestions) {
+            //     const suggestionBox = document.getElementById('suggestion-box');
+            //     suggestionBox.innerHTML = '';
+            //     suggestions.forEach(suggestion => {
+            //         const suggestionItem = document.createElement('div');
+            //         suggestionItem.className = 'suggestion-item';
+            //         suggestionItem.textContent = suggestion;
+            //         suggestionItem.addEventListener('click', function() {
+            //             referenceInput.value = suggestion;
+            //             clearSuggestions();
+            //         });
+            //         suggestionBox.appendChild(suggestionItem);
+            //     });
+            // }
+
+            // function clearSuggestions() {
+            //     const suggestionBox = document.getElementById('suggestion-box');
+            //     suggestionBox.innerHTML = '';
+            // }
+        });
+
+        async function replaceMBART_ko(elementId) {
+            console.log("Replace MBART function called");  // Debugging statement
+            const element = document.getElementById(elementId);
+            const typingDots = document.querySelectorAll('.typing-dots');
+            if (element) {
+                console.log(`Element with ID ${elementId} found`);  // Debugging statement
+                console.log(`Content: ${element.innerHTML}`);  // Debugging statement
+                typingDots.forEach(dot => dot.style.display = 'inline');  // Show all typing dots
+                const response = await fetch('/enhance_ko', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ text: element.innerHTML })
+                });
+                const data = await response.json();
+                typingDots.forEach(dot => dot.style.display = 'none');  // Hide all typing dots
+                console.log(`hiding the typing dots for class ${elementId}`) // Hide the typing dots
+                if (data.translated_text) {
+                    element.innerHTML = data.translated_text;
+                    element.classList.add('text-fade');  // Add the animation class
+                } else {
+                    console.error('Translation failed');
+                }
+            } else {
+                console.error(`Element with ID ${elementId} not found`);
+            }
+        }
+
+        function underlineBibleVerses(elementId) {
+            console.log("Underline Bible verses function called");  // Debugging statement
+            // Adjusted regular expression to match Korean Bible references
+            const regex = /([가-힣]+) (\d+):(\d+(-\d+)?)/g;
+            const element = document.getElementById(elementId);
+            if (element) {
+                console.log(`Element with ID ${elementId} found`);  // Debugging statement
+                console.log(`Content: ${element.innerHTML}`);  // Debugging statement
+                element.innerHTML = element.innerHTML.replace(regex, function(match, book, chapter, verse) {
+                    console.log(`Found Bible reference: ${match}`);
+                    return `<button class="bible-verse" data-book="${book}" data-chapter="${chapter}" data-verse="${verse}" style="cursor: pointer; background: none; border-bottom: solid 1px black; border-radius: 0px; padding: 2px;">${match}</button>`;
+                });
+            } else {
+                console.error(`Element with ID ${elementId} not found`);
+            }
+        }
+
+        function fetchVerse(book, chapter, verse, element, event) {
+            console.log(`Fetching verse: ${book} ${chapter}:${verse}`);  // Debugging statement
+            fetch(`/fetch_verse_ko?book=${book}&chapter=${chapter}&verse=${verse}`)
+                .then(response => response.json())
+                .then(data => {
+                    console.log("Verse data fetched", data);
+                    const verseText = data.text || 'Verse not found.';
+                    const popup = document.createElement('div');
+                    popup.className = 'verse-popup';
+                    popup.innerHTML = `<strong>${book} ${chapter}:${verse}</strong>: ${verseText} <button class="close-popup">Close</button>`;
+                    document.body.appendChild(popup);
+                    const rect = element.getBoundingClientRect();
+                    popup.style.top = `${rect.bottom + window.scrollY}px`;
+                    popup.style.left = `${rect.left + window.scrollX}px`;
+
+                    popup.querySelector('.close-popup').addEventListener('click', () => {
+                        popup.remove();
+                    });
+
+                    // Close popup when clicking outside of it
+                    document.addEventListener('click', function(event) {
+                        if (!popup.contains(event.target) && !event.target.classList.contains('bible-verse')) {
+                            popup.remove();
+                        }
+                    }, { once: true });
+                })
+                .catch(error => {
+                    console.error('Error fetching verse:', error);
+                });
+        }
+
+        // function setLanguage(lang, redirectUrl) {
+        //     fetch(`/set_language?lang=${lang}`)
+        //         .then(response => response.json())
+        //         .then(data => {
+        //             if (data.success) {
+        //                 window.location.href = redirectUrl;
+        //             }
+        //         });
+        // }
+    </script>
+</head>
+<div id="mySidebar" class="left-sidebar">
+    <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">Close</a>
+    <div class="sidebar-container">
+    <h4>Recent Verses</h4>
+    {% for query in recent_queries %}
+        <a href="{{ url_for('query', reference=query) }}">{{ query }}</a><br>
+    {% endfor %}
+    <h4>Language</h4>
+    <p href id="btn-en" class="{% if session.get('lang') == 'en' %}active{% endif %}" style="cursor: pointer; background: none;">English</p>
+    <p href id="btn-ko" class="{% if session.get('lang') == 'ko' %}active{% endif %}"style="cursor: pointer; background: none; padding: 2px;">한글 (Korean)</p>
+    <p href id="btn-mal" class="{% if session.get('lang') == 'mal' %}active{% endif %}"style="cursor: pointer; background: none; padding: 2px;">മലയാളം (Malayalam)</p>
+    <p href id="btn-ne" class="{% if session.get('lang') == 'ne' %}active{% endif %}"style="cursor: pointer; background: none; padding: 2px;">नेपाली (Nepali)</p>
+    <h4>About & Feedback</h4>
+    <p><a href="/support_ko">About</a></p>
+    </div>
+</div>
+
+<div class="header-container">
+    <button class="openbtn" onclick="openNav()"><i class="fa-solid fa-bars-staggered" onclick="event.stopPropagation(); openNav();"></i></button>
+    <h1>성경 참조</h1>
+</div>
+<div class="container">
+        <form method="POST">
+            <label for="reference">성경을 검색하세요:</label>
+            <input class="no-underline user-input" type="text" id="reference" name="reference" value="{{ user_input if user_input else '' }}" placeholder="마태복음 2:3-5, 바울의 재판은 어디서 열렸는가">
+            <input type="hidden" name="language" value="ko">  <!-- Hidden input for language -->
+            <button class="submit-button" type="submit">검색</button>
+        </form>
+        {% if response %}
+            {% if response.error %}
+                <h2>오류:</h2>
+                <pre>{{ response.error }}</pre>
+            {% else %}
+            <div class="icon-title-container">
+                <!-- <span class="icon"><i class="fa-regular fa-bookmark"></i></span>     -->
+                <h2 class="no-underline requested-reference">{{ response.requested_reference }}</h2>
+            </div>
+                <div class="passage">
+                    <div class="passage-inside" id="passageInside">
+                        {% for verse in response.retrieved_passages %}
+                            {% if verse.text.startswith('¶') %}
+                                <br><span class="verse-num bible-verse" data-book="{{ response.book }}" data-chapter="{{ response.chapter }}" data-verse="{{ verse.verse_num }}">{{ verse.verse_num }}</span>
+                                <span class="verse-text">{{ verse.text | replace('¶', '', 1) }}</span>
+                            {% else %}
+                                <span class="verse-num bible-verse" data-book="{{ response.book }}" data-chapter="{{ response.chapter }}" data-verse="{{ verse.verse_num }}">{{ verse.verse_num }}</span>
+                                <span class="verse-text">{{ verse.text }}</span>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+                <h2>주요 주제</h2>
+                <div class ="analysis-section">
+                    <pre id="analysis">{{response.analysis}} </pre>
+                    <div class="typing-dots"></div>
+                </div>
+                    <h2>설명</h2>
+                <div class ="analysis-section">
+                    <pre id="explanation">{{response.explanation}}</pre>       
+                    {% if not response.explanation%}
+                    <form method="POST">
+                        <input type="hidden" name="reference" value="{{ user_input | e }}">
+                        <button type="submit" style="margin-bottom: 1rem;">Retry</button>
+                        <span><br>서버가 과부하 상태입니다. 다시 시도 버튼을 클릭하세요.</span><br>
+                        <span>우리의 <a href="/support_ko">개발 노력</a>에 대해 더 읽어보세요.</span>
+                    </form>
+                {% endif %}     
+                </div>
+                <h2>관련 성경 구절</h2>
+                <div class ="analysis-section">
+                    <pre id="related-verses">{{response.related_verses}}</pre>
+                {% if not response.explanation or not response.related_verses %}
+                    <form method="POST">
+                        <input type="hidden" name="reference" value="{{ user_input | e }}">
+                        <button type="submit">다시 시도</button>
+                    </form>
+                {% endif %}
+            {% endif %}
+        {% endif %}
+        </div>  
+    </div>
+    <script>
+         function openNav() {
+            document.getElementById("mySidebar").style.width = "250px";
+            document.getElementById("main").style.marginLeft = "250px";
+        }
+
+        function closeNav() {
+            document.getElementById("mySidebar").style.width = "0";
+            document.getElementById("main").style.marginLeft= "0";
+        }
+
+        // Close the sidebar if the user clicks outside of it
+        document.addEventListener('click', function(event) {
+            var sidebar = document.getElementById("mySidebar");
+            if (sidebar.style.width === "250px" && !sidebar.contains(event.target) && !event.target.classList.contains('openbtn')) {
+                closeNav();
+            }
+        });
+        function setLanguage(lang) {
+            fetch(`/set_language?lang=${lang}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    }
+                });
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const passageInside = document.getElementById('passageInside');
+            const maxHeight = window.innerHeight * 0.34; // Calculate 44vh in pixels
+            if (passageInside.scrollHeight > maxHeight) {
+                passageInside.classList.add('with-shadow');
+            } else {
+                passageInside.classList.remove('with-shadow');
+            }
+        });
+
+    </script>
+</div>
+<div class="bottom-menu">
+    <a href="{{ url_for('home_ko') }}">
+        <span class="icon active"><i class="fa-solid fa-church"></i></span>
+    </a>
+    <a href="{{ url_for('books_ko') }}">
+        <span class="icon"><i class="fa-solid fa-book-open"></i></span>
+    </a>
+    <a href="{{ url_for('devotionals_ko') }}">
+        <span class="icon"><i class="fa-solid fa-star-of-life"></i></span>
+    </a>
+</div>
+<footer></footer>
+</body>
+</html>

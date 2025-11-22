@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ne">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>समर्थन</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <style>
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        h1, h2 {
+            color: #333;
+        }
+
+        p {
+            font-size: 1rem;
+            line-height: 1.6;
+            color: #666;
+        }
+
+        form {
+            margin-top: 2rem;
+            margin: 0 auto;
+            align-items: center;
+            width: 66vw;
+            max-width: 300px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+        }
+
+        input, textarea {
+            width: 100% !important;
+            padding: 0.75rem;
+            margin-bottom: 1rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        button {
+            padding: 0.75rem 1.5rem;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+    <div class="container">
+        <h1>समर्थन</h1>
+        <!-- Display flash messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                    <div class="flash-message {{ category }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+        {% endwith %}
+        <h3>कुनै विज्ञापन छैन, कुनै अवरोध छैन, केवल वचनको ध्यान मात्र।</h3>
+        <p>यो अनुप्रयोग सिड्नीमा बस्ने चर्चका सदस्यहरूले बनाएको हो, यो पूर्ण रूपमा निःशुल्क छ र विज्ञापन बिना सञ्चालन हुन्छ।</p>
+        <p><strong>भविष्य योजनाहरू:</strong> 
+            mybible.au डोमेन मार्फत सबैलाई उपलब्ध गराउने योजना ($25/वर्ष)
+            दिनको 100,000 पटकको पहुँचलाई समर्थन गर्न सक्ने Python सर्भर सञ्चालन ($96/वर्ष)
+            <br>नेपाली समर्थन थप्ने योजना
+            <br>विषयगत बाइबल पढ्ने पृष्ठ थप्ने योजना
+            <br>आइतबारको प्रवचन: प्रवचनमा प्रयोग भएका पदहरू सजिलैसँग हेर्न मिल्ने गरी उपलब्ध गराउने योजना
+            <br>यस अनुप्रयोगको लागि विशेष e-रीडर विकास गर्ने योजना
+        </p>
+        <p><strong>द्वारा संचालित:</strong> 
+            <br>प्रविधि: LangChain, Python, HTML, CSS
+            <br>बाइबल: अंग्रेजी - King James Version (1769), नेपाली - ERV-NE
+            <br>AI मोडेल: mixtral-8x7b-32768. यो मोडेल HuggingFace द्वारा विकसित AI प्रविधि हो, जसमा 450 अर्ब प्यारामिटरहरू र 32,768 टोकनहरूको सन्दर्भ विन्डो छ।
+        </p>
+        <p><strong>सहयोग गर्ने तरिका:</strong> तलको प्रतिक्रिया फारम मार्फत आफ्नो विचारहरू साझा गर्नुहोस्।
+            वा सर्भर लागत, डोमेन मर्मत लागत, वा एक कप कफीको लागि दान गरेर सहयोग गर्न सक्नुहुन्छ।
+            PayId: 0449694492
+        </p>
+        <p><strong>Immediately in need of:</strong> 
+            Well-tested and reliable opensource language models specialised in translating: Korean, Nepali and Malayalam 
+            <br> Reliable digital Bible (API or Database) for Nepali and Malayalam NKJV or KJV.
+            <br> Korean, Nepali and Malayalam speaking testers for the app.
+            <br>Korean Translation: Mbart Large by Facebook. 
+            <br>Nepali Translation: Mixtral-8x7b by Mistral AI.
+        </p>
+        
+        <h2>प्रतिक्रिया फारम</h2>
+        <form method="POST" action="{{ url_for('send_sms') }}">
+            <label for="name">नाम:</label>
+            <input type="text" id="name" name="name" required>
+            
+            <label for="email">इमेल:</label>
+            <input class="user-input" type="email" id="email" name="email" required>
+            
+            <label for="message">सन्देश:</label>
+            <textarea id="message" name="message" rows="4" required></textarea>
+            <br>
+            <button type="submit" class="button">प्रतिक्रिया पठाउनुहोस्</button>
+        </form>
+    </div>
+    <div class="bottom-menu">
+        <a href="/home_ne">
+            <span class="icon active"><i class="fa-solid fa-church"></i></span>
+        </a>
+        <a href="/books_ne">
+            <span class="icon"><i class="fa-solid fa-book-open"></i></span>
+        </a>
+    </div>
+    <footer>
+        <p>यो अनुप्रयोग सिड्नीमा बस्ने चर्चका सदस्यहरूले बनाएको हो</p>
+        <a href="https://tomj.tech/" target="_blank">tom's tech </a>
+    </footer>
+</body>
+</html>

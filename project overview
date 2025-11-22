@@ -1,0 +1,52 @@
+Home
+Daily Verse or Devotion
+Big Mic in the center that listens for input and response shown below. 
+
+
+Bible
+show all books in 2 columns: left column has old testament, right column has new testament.
+clicking on a book opens up all chapters, first load only chapter 1 and lazy load the rest chapters.
+clicking on a book also displays a right sidebar with chapter selection, where each chapter selector acts as an anchor to the chapter of that book and
+clicking on it just scrolls down to the right chapter because by then all chaptesrs have loaded.
+
+
+
+Theme tab for only life challenges: 
+(Anxiety & Fear
+Depression & Loneliness
+Anger & Self-Control
+Healing & Comfort
+Trials & Suffering
+Financial Wisdom
+Decision Making
+Purpose & Calling)
+shows 1 card at a time (animate to show random pick) then connects to a new story telling, chapter reading and prayer. In the BG, connect this life challenges to a major life theme. (Hope & Perseverance
+Wisdom & Knowledge
+Peace & Rest
+Joy & Gratitude
+Forgiveness & Reconciliation
+Prayer & Communication with God
+Family & Relationships
+Leadership & Service)
+
+New tab for read the Bible:
+For beginners show overview of all, what path to read. Each chapter is a book card with backcover summary. 
+For biblical concepts, it shows subconcepts and shows passages, analysis.
+Creation & Nature
+Kingdom of God
+Salvation & Redemption
+God's Character
+Jesus's Teachings
+The Church & Community
+End Times & Prophecy
+Justice & Righteousness
+
+For spiritual growth, each theme shows passages and then analysis.
+Righteousness & Holiness
+Grace & Mercy
+Repentance & Renewal
+Obedience & Faithfulness
+Humility & Pride
+Worship & Praise
+The Holy Spirit
+Spiritual Warfare

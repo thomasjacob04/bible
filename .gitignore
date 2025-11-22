@@ -1,0 +1,29 @@
+# Environment variables (contains secrets)
+.env
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Flask session files
+flask_session/
+
+# Database files (optional - uncomment if you don't want to commit databases)
+# *.db
+# *.sqlite
+
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+

@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Devotionals</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background-color: white;
+            font-family: system-ui, -apple-system, sans-serif;
+            color: white;
+        }
+
+        .header-container{
+            flex-direction: column;
+        }
+        .header-container h1 {
+            margin: 0;
+            padding: 0;
+ 
+        }
+
+        .header-container p {
+            margin: 0;
+            padding: 0;
+            font-size: 0.875rem;
+            color: #333333;
+        }
+
+
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            margin: 0 0 0.5rem 0;
+            color:#1F2937;
+        }
+
+        .header p {
+            font-size: 0.875rem;
+            color: #9CA3AF;
+            margin: 0;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 1rem;
+            padding-bottom: 2rem;
+        }
+
+        .card {
+            background: linear-gradient(to bottom right, #1F2937, #374151);
+            border-radius: 0.75rem;
+            padding: 1rem;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            text-decoration: none;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            /* aspect-ratio: 3/4; */
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
+        }
+
+        .card-icon {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .card-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .card-description {
+            font-size: 0.75rem;
+            color: #9CA3AF;
+            margin: 0;
+            line-height: 1.2;
+        }
+
+        .card-theme {
+            margin-top: auto;
+            font-size: 0.75rem;
+            color: #60A5FA;
+        }
+
+        @media (max-width: 640px) {
+            .grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header-container">
+        <h1>Let's Pray</h1>
+        <p>Select your current state of mind to find comfort and guidance</p>
+    </div>
+    <div class="container">
+        <div id="devotionals" class="grid">
+            <!-- Devotionals will be dynamically inserted here -->
+        </div>
+    </div>
+    <script>
+        const devotionals = [
+            {
+                id: 'anxiety',
+                name: 'Anxiety & Fear',
+                description: 'Feeling overwhelmed or fearful about life',
+                icon: '😰',
+                connectedTheme: 'Peace & Rest'
+            },
+            {
+                id: 'loneliness',
+                name: 'Depression & Loneliness',
+                description: 'Feeling isolated or experiencing deep sadness',
+                icon: '😔',
+                connectedTheme: 'Hope & Perseverance'
+            },
+            {
+                id: 'purpose',
+                name: 'Purpose & Calling',
+                description: 'Seeking meaning and direction in life',
+                icon: '🌟',
+                connectedTheme: 'Wisdom & Knowledge'
+            },
+            {
+                id: 'anger',
+                name: 'Anger & Hurt',
+                description: 'Dealing with anger and past hurts',
+                icon: '😠',
+                connectedTheme: 'Forgiveness & Healing'
+            },
+            {
+                id: 'worry',
+                name: 'Worry & Stress',
+                description: 'Managing daily stress and worries',
+                icon: '😓',
+                connectedTheme: 'Trust & Peace'
+            },
+            {
+                id: 'grief',
+                name: 'Grief & Loss',
+                description: 'Coping with loss and sadness',
+                icon: '💔',
+                connectedTheme: 'Comfort & Hope'
+            },
+            {
+                id: 'doubt',
+                name: 'Doubt & Faith',
+                description: 'Strengthening faith in difficult times',
+                icon: '🤔',
+                connectedTheme: 'Faith & Trust'
+            },
+            {
+                id: 'gratitude',
+                name: 'Gratitude',
+                description: 'Finding joy in all circumstances',
+                icon: '🙏',
+                connectedTheme: 'Joy & Thanksgiving'
+            },
+            {
+                id: 'guidance',
+                name: 'Guidance',
+                description: 'Seeking direction and wisdom',
+                icon: '🧭',
+                connectedTheme: 'Wisdom & Direction'
+            },
+            {
+                id: 'peace',
+                name: 'Peace',
+                description: 'Finding tranquility in chaos',
+                icon: '🕊️',
+                connectedTheme: 'Peace & Serenity'
+            }
+        ];
+
+        const devotionalsContainer = document.getElementById('devotionals');
+
+        devotionals.forEach(devotional => {
+            const card = document.createElement('a');
+            card.href = `/devotionals/${devotional.id}`;
+            card.className = 'card';
+            card.innerHTML = `
+                <div class="card-icon">${devotional.icon}</div>
+                <h3 class="card-title">${devotional.name}</h3>
+                <p class="card-description">${devotional.description}</p>
+               
+            `;
+            devotionalsContainer.appendChild(card);
+        });
+    </script>
+        <div class="bottom-menu">
+            <a href="{{ url_for('home') }}">
+                <span class="icon"><i class="fa-solid fa-church"></i></span>
+                <span class="menu-name">Sermon</span>
+            </a>
+            <a href="{{ url_for('books') }}">
+                <span class="icon"><i class="fa-solid fa-book-open"></i></span>
+                <span class="menu-name">Bible</span>
+            </a>
+            <a href="{{ url_for('devotionals') }}">
+                <span class="icon active"><i class="fa-solid fa-star-of-life"></i></span>
+                <span class="menu-name active">Pray</span>
+            </a>
+        </div>
+</body>
+<!-- <div class="card-theme">${devotional.connectedTheme}</div> -->
+</html>
+

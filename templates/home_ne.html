@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="ne">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>बाइबल सन्दर्भ</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("DOM fully loaded and parsed");
+            // replaceMBART_ne('analysis');
+            // replaceMBART_ne('explanation');
+            underlineBibleVerses('related-verses');
+
+            document.body.addEventListener('click', function(event) {
+                console.log("Click detected on body");  // Debugging statement
+                if (event.target.classList.contains('bible-verse')) {
+                    console.log("Bible verse clicked");  // Debugging statement
+                    const book = event.target.getAttribute('data-book');
+                    const chapter = event.target.getAttribute('data-chapter');
+                    const verse = event.target.getAttribute('data-verse');
+                    console.log(`Fetching verse: ${book} ${chapter}:${verse}`);
+                    fetchVerse(book, chapter, verse, event.target, event);
+                }
+            });
+
+            const btnEn = document.getElementById('btn-en');
+            const btnKo = document.getElementById('btn-ko');
+            const btnMl = document.getElementById('btn-mal');
+            const btnNe = document.getElementById('btn-ne');
+
+            if (btnEn) {
+                btnEn.addEventListener('click', function() {
+                    setLanguage('en');
+                });
+            }
+
+            if (btnKo) {
+                btnKo.addEventListener('click', function() {
+                    setLanguage('ko');
+                });
+            }
+
+            if (btnMl) {
+                btnMl.addEventListener('click', function() {
+                    setLanguage('mal');
+                });
+            }
+
+            if (btnNe) {
+                btnNe.addEventListener('click', function() {
+                    setLanguage('ne');
+                });
+            }
+
+        });
+
+        async function replaceMBART_ne(elementId) {
+            console.log("Replace MBART function called");  // Debugging statement
+            const element = document.getElementById(elementId);
+            const typingDots = document.querySelectorAll('.typing-dots');
+            if (element) {
+                console.log(`Element with ID ${elementId} found`);  // Debugging statement
+                console.log(`Content: ${element.innerHTML}`);  // Debugging statement
+                typingDots.forEach(dot => dot.style.display = 'inline');  // Show all typing dots
+                const response = await fetch('/enhance_ne', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ text: element.innerHTML })
+                });
+                const data = await response.json();
+                typingDots.forEach(dot => dot.style.display = 'none');  // Hide all typing dots
+                console.log(`hiding the typing dots for class ${elementId}`) // Hide the typing dots
+                if (data.translated_text) {
+                    element.innerHTML = data.translated_text;
+                    element.classList.add('text-fade');  // Add the animation class
+                } else {
+                    console.error('Translation failed');
+                }
+            } else {
+                console.error(`Element with ID ${elementId} not found`);
+            }
+        }
+
+        function underlineBibleVerses(elementId) {
+            console.log("Underline Bible verses function called");  // Debugging statement
+            const bookNames = [
+                "उत्पत्तिको पुस्तक", "प्रस्थानको पुस्तक", "लेवीहरूको पुस्तक", "गन्तीको पुस्तक", "व्यवस्थाको पुस्तक", "यहोशूको पुस्तक", "न्यायकर्त्ताहरूको पुस्तक", "रूथको पुस्तक",
+                "1 शमूएलको पुस्तक", "2 शमूएलको पुस्तक", "1 राजाहरूको पुस्तक", "2 राजाहरूको पुस्तक", "1 इतिहासको पुस्तक", "2 इतिहासको पुस्तक", "एज्राको", "नहेम्याहको पुस्तक",
+                "एस्तरको पुस्तक", "अय्यूबको पुस्तक", "भजनसंग्रह", "हितोपदेशको पुस्तक", "उपदेशकको पुस्तक", "सुलेमानको श्रेष्ठगीत", "यशैयाको पुस्तक", "यर्मियाको पुस्तक",
+                "यर्मियाको विलाप", "इजकिएलको पुस्तक", "दानियलको पुस्तक", "होशे", "योएल", "आमोस", "ओबदिया", "योना", "मीका",
+                "नहूम", "हबकूक", "सपन्याह", "हाग्गै", "जकरिया", "मलाकी",  "मत्तीले लेखेको सुसमाचार", "मर्कूसले लेखेको सुसमाचार", "लूकाले लेखेको सुसमाचार", "यूहन्नाले लेखेको सुसमाचार", "प्रेरितहरूका काम", "रोमीहरूलाई पत्र", "कोरिन्थीहरूलाई पहिलो पत्र", "कोरिन्थीहरूलाई दोस्त्रो पत्र",
+                "गलातीहरूलाई पत्र", "एफिसीहरूलाई पत्र", "फिलिप्पीहरूलाई पत्र", "कलस्सीहरूलाई पत्र", "थिस्सलोनिकीहरूलाई पहिलो पत्र", "थिस्सलोनिकीहरूलाई दोस्त्रो पत्र",
+                "तिमोथीलाई पहिलो पत्र", "तिमोथीलाई दोस्त्रो पत्र", "तीतसलाई पत्र", "फिलेमोनलाई पत्र", "हिब्रूहरूको निम्ति पत्र", "याकूबको पत्र", "पत्रुसको पहिलो पत्र", "पत्रुसको दोस्त्रो पत्र",
+                "यूहन्नाको पहिलो पत्र", "यूहन्नाको दोस्त्रो पत्र", "यूहन्नाको तेस्त्रो पत्र", "यहूदाको पत्र", "यूहन्नालाई भएको प्रकाश"
+                ];
+
+            const bookNamesPattern = bookNames.join('|');
+            const regex = new RegExp(`(${bookNamesPattern}) (\\d+):(\\d+(-\\d+)?)`, 'g');
+               const element = document.getElementById(elementId);
+            if (element) {
+                console.log(`Element with ID ${elementId} found`);  // Debugging statement
+                console.log(`Content: ${element.innerHTML}`);  // Debugging statement
+                element.innerHTML = element.innerHTML.replace(regex, function(match, book, chapter, verse) {
+                    console.log(`Found Bible reference: ${match}`);
+                    return `<button class="bible-verse" data-book="${book}" data-chapter="${chapter}" data-verse="${verse}" style="cursor: pointer; background: none; border-bottom: solid 1px black; border-radius: 0px; padding: 2px;">${match}</button>`;
+                });
+            } else {
+                console.error(`Element with ID ${elementId} not found`);
+            }
+        }
+
+
+        function fetchVerse(book, chapter, verse, element, event) {
+            console.log(`Fetching verse: ${book} ${chapter}:${verse}`);  // Debugging statement
+            fetch(`/fetch_verse_ne?book=${book}&chapter=${chapter}&verse=${verse}`)
+                .then(response => response.json())
+                .then(data => {
+                    console.log("Verse data fetched", data);
+                    const verseText = data.text || 'Verse not found.';
+                    const popup = document.createElement('div');
+                    popup.className = 'verse-popup';
+                    popup.innerHTML = `<strong>${book} ${chapter}:${verse}</strong>: ${verseText} <button class="close-popup">Close</button>`;
+                    document.body.appendChild(popup);
+                    const rect = element.getBoundingClientRect();
+                    popup.style.top = `${(window.innerHeight - popup.offsetHeight) / 2 + window.scrollY}px`;
+                    popup.style.left = `${(window.innerWidth - popup.offsetWidth) / 2 + window.scrollX}px`;
+                    popup.style.left = `${rect.left + window.scrollX}px`;
+
+                    popup.querySelector('.close-popup').addEventListener('click', () => {
+                        popup.remove();
+                    });
+
+                    // Close popup when clicking outside of it
+                    document.addEventListener('click', function(event) {
+                        if (!popup.contains(event.target) && !event.target.classList.contains('bible-verse')) {
+                            popup.remove();
+                        }
+                    }, { once: true });
+                })
+                .catch(error => {
+                    console.error('Error fetching verse:', error);
+                });
+        }
+
+        // function setLanguage(lang, redirectUrl) {
+        //     fetch(`/set_language?lang=${lang}`)
+        //         .then(response => response.json())
+        //         .then(data => {
+        //             if (data.success) {
+        //                 window.location.href = redirectUrl;
+        //             }
+        //         });
+        // }
+    </script>
+</head>
+<body>
+    <div id="mySidebar" class="left-sidebar">
+        <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">Close</a>
+        <div class="sidebar-container">
+        <h4>Recent Verses</h4>
+        {% for query in recent_queries %}
+            <a href="{{ url_for('query', reference=query) }}">{{ query }}</a><br>
+        {% endfor %}
+        <h4>Language</h4>
+        <p id="btn-en" class="{% if session.get('lang') == 'en' %}active{% endif %}" style="cursor: pointer; background: none;">English</p>
+        <p href id="btn-ko" class="{% if session.get('lang') == 'ko' %}active{% endif %}"style="cursor: pointer; background: none; padding: 2px;">한글 (Korean)</p>
+        <p href id="btn-mal" class="{% if session.get('lang') == 'mal' %}active{% endif %}"style="cursor: pointer; background: none; padding: 2px;">മലയാളം (Malayalam)</p>
+        <p href id="btn-ne" class="{% if session.get('lang') == 'ne' %}active{% endif %}"style="cursor: pointer; background: none; padding: 2px;">नेपाली (Nepali)</p>
+        <h4>About & Feedback</h4>
+        <p><a href="/support_ne">About</a></p>
+        </div>
+    </div>
+
+    <div class="header-container">
+        <button class="openbtn" onclick="openNav()"><i class="fa-solid fa-bars-staggered" onclick="event.stopPropagation(); openNav();"></i></button>
+        <h1>बाइबल सन्दर्भ</h1>
+    </div>
+        <div class="container">
+        <form method="POST">
+            <label for="reference">बाइबल खोज्नुहोस्:</label>
+            <input class="no-underline user-input" type="text" id="reference" name="reference" value="{{ user_input if user_input else '' }}" placeholder="मत्ती 2:3-5, पावलको परीक्षण कहाँ भयो?">
+            <input type="hidden" name="language" value="ne">  <!-- Hidden input for language -->
+            <button class="submit-button" type="submit">खोज्नुहोस्</button>
+        </form>
+        {% if response %}
+            {% if response.error %}
+                <h2>त्रुटि:</h2>
+                <pre>{{ response.error }}</pre>
+            {% else %}
+            <div class="icon-title-container">
+                <h2 class="no-underline requested-reference">{{ response.requested_reference }}</h2>
+            </div>
+                <div class="passage">
+                    <div class="passage-inside" id="passageInside">
+                        {% for verse in response.retrieved_passages %}
+                            {% if verse.text.startswith('¶') %}
+                                <br><span class="verse-num bible-verse" data-book="{{ response.book }}" data-chapter="{{ response.chapter }}" data-verse="{{ verse.verse_num }}">{{ verse.verse_num }}</span>
+                                <span class="verse-text">{{ verse.text | replace('¶', '', 1) }}</span>
+                            {% else %}
+                                <span class="verse-num bible-verse" data-book="{{ response.book }}" data-chapter="{{ response.chapter }}" data-verse="{{ verse.verse_num }}">{{ verse.verse_num }}</span>
+                                <span class="verse-text">{{ verse.text }}</span>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+                <h2>मुख्य विषयहरू</h2>
+                <div class ="analysis-section">
+                    <pre id="analysis">{{response.analysis}} </pre>
+                    <!-- <div class="typing-dots"></div> -->
+                </div>
+                    <h2>व्याख्या</h2>
+                <div class ="analysis-section">
+                    <pre id="explanation">{{response.explanation}}</pre>       
+                    {% if not response.explanation%}
+                    <form method="POST">
+                        <input type="hidden" name="reference" value="{{ user_input | e }}">
+                        <button type="submit" style="margin-bottom: 1rem;">पुन: प्रयास गर्नुहोस्</button>
+                        <span><br>हाम्रा सर्भरहरू व्यस्त छन्, कृपया पुन: प्रयास गर्नुहोस् बटनमा क्लिक गर्नुहोस्।</span><br>
+                        <span>हाम्रो <a href="/support_ne">विकास प्रयासहरू</a> बारे थप पढ्नुहोस्</span>
+                    </form>
+                {% endif %}     
+                </div>
+                <h2>सम्बन्धित बाइबल पदहरू</h2>
+                <div class ="analysis-section">
+                    <pre id="related-verses">{{response.related_verses}}</pre>
+                {% if not response.explanation or not response.related_verses %}
+                    <form method="POST">
+                        <input type="hidden" name="reference" value="{{ user_input | e }}">
+                        <button type="submit">पुन: प्रयास गर्नुहोस्</button>
+                    </form>
+                {% endif %}
+            {% endif %}
+        {% endif %}
+        </div>  
+    </div>
+    <script>
+        function openNav() {
+            document.getElementById("mySidebar").style.width = "250px";
+            document.getElementById("main").style.marginLeft = "250px";
+        }
+
+        function closeNav() {
+            document.getElementById("mySidebar").style.width = "0";
+            document.getElementById("main").style.marginLeft= "0";
+        }
+
+        // Close the sidebar if the user clicks outside of it
+        document.addEventListener('click', function(event) {
+            var sidebar = document.getElementById("mySidebar");
+            if (sidebar.style.width === "250px" && !sidebar.contains(event.target) && !event.target.classList.contains('openbtn')) {
+                closeNav();
+            }
+        });
+
+        function setLanguage(lang) {
+            fetch(`/set_language?lang=${lang}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    }
+                });
+        }
+
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const passageInside = document.getElementById('passageInside');
+            const maxHeight = window.innerHeight * 0.34; // Calculate 44vh in pixels
+            if (passageInside.scrollHeight > maxHeight) {
+                passageInside.classList.add('with-shadow');
+            } else {
+                passageInside.classList.remove('with-shadow');
+            }
+        });
+
+    </script>
+    <div class="bottom-menu">
+        <a href="{{ url_for('home_ne') }}">
+            <span class="icon active"><i class="fa-solid fa-church"></i></span>
+        </a>
+        <a href="{{ url_for('books_ne') }}">
+            <span class="icon"><i class="fa-solid fa-book-open"></i></span>
+        </a>
+    </div>
+    <!-- <footer>
+        <a href="/support_ne">About</a>
+    </footer> -->
+</body>
+</html>

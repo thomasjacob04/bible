@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bible Reference</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDFLnUQcWcPCurZdF-WKLvXXNhJrjDjxCM&callback=loadGoogleMaps" async defer></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("DOM fully loaded and parsed");
+            underlineBibleVerses('related-verses');
+
+            document.body.addEventListener('click', function(event) {
+                console.log("Click detected on body");  // Debugging statement
+                if (event.target.classList.contains('bible-verse')) {
+                    console.log("Bible verse clicked");  // Debugging statement
+                    const book = event.target.getAttribute('data-book');
+                    const chapter = event.target.getAttribute('data-chapter');
+                    const verse = event.target.getAttribute('data-verse');
+                    console.log(`Fetching verse: ${book} ${chapter}:${verse}`);
+                    fetchVerse(book, chapter, verse, event.target, event);
+                }
+            });
+
+            const btnEn = document.getElementById('btn-en');
+            const btnKo = document.getElementById('btn-ko');
+            const btnMl = document.getElementById('btn-mal');
+            const btnNe = document.getElementById('btn-ne');
+
+            if (btnEn) {
+                btnEn.addEventListener('click', function() {
+                    setLanguage('en');
+                });
+            }
+
+            if (btnKo) {
+                btnKo.addEventListener('click', function() {
+                    setLanguage('ko');
+                });
+            }
+
+            if (btnMl) {
+                btnMl.addEventListener('click', function() {
+                    setLanguage('mal');
+                });
+            }
+
+            if (btnNe) {
+                btnNe.addEventListener('click', function() {
+                    setLanguage('ne');
+                });
+            }
+        });
+
+        function toggleCollapse(sectionId) {
+            const content = document.getElementById(sectionId);
+            if (content.style.display === "none" || content.style.display === "") {
+                content.style.display = "block";
+            } else {
+                content.style.display = "none";
+            }
+        }
+
+        function underlineBibleVerses(elementId) {
+            console.log("Underline Bible verses function called", elementId);  // Debugging statement
+            const regex = /\b(I{1,3}\s)?([A-Za-z]+) (\d+):(\d+(-\d+)?)/g;
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.innerHTML = element.innerHTML.replace(regex, function(match, roman, book, chapter, verse) {
+                    console.log(`Found Bible reference: ${match}`);
+                    const fullBookName = (roman ? roman.trim() + ' ' : '') + book;
+                    return `<span class="bible-verse" data-book="${fullBookName}" data-chapter="${chapter}" data-verse="${verse}" style="cursor: pointer; background: none; border-bottom: solid 1px black; border-radius: 0px; padding: 2px;">${match}</span>`;
+                });
+            } else {
+                console.error(`Element with ID ${elementId} not found`);
+            }
+        }
+
+        function fetchVerse(book, chapter, verse, element, event) {
+            console.log(`Fetching verse: ${book} ${chapter}:${verse}`);  // Debugging statement
+            fetch(`/fetch_verse?book=${book}&chapter=${chapter}&verse=${verse}`)
+                .then(response => response.json())
+                .then(data => {
+                    console.log("Verse data fetched", data);
+                    const verseText = data.text || 'Verse not found.';
+                    const popup = document.createElement('div');
+                    popup.className = 'verse-popup';
+                    popup.innerHTML = `<strong>${book} ${chapter}:${verse}</strong>: ${verseText} <button class="close-popup">Close</button>`;
+                    document.body.appendChild(popup);
+                    const rect = element.getBoundingClientRect();
+                    popup.style.top = `${rect.bottom + window.scrollY}px`;
+                    popup.style.left = `${rect.left + window.scrollX}px`;
+
+                    popup.querySelector('.close-popup').addEventListener('click', () => {
+                        popup.remove();
+                    });
+
+                    // Close popup when clicking outside of it
+                    document.addEventListener('click', function(event) {
+                        if (!popup.contains(event.target) && !event.target.classList.contains('bible-verse')) {
+                            popup.remove();
+                        }
+                    }, { once: true });
+                })
+                .catch(error => {
+                    console.error('Error fetching verse:', error);
+                });
+        }
+
+        function addVerse(event) {
+            const button = event.target;
+            const book = button.getAttribute('data-book');
+            const chapter = button.getAttribute('data-chapter');
+            const verse = button.getAttribute('data-verse');
+            const userInput = document.getElementById('reference');
+            const currentInput = userInput.value;
+
+            // Update the user input to include one more verse
+            const newInput = `$requested_reference-${verse}`;
+            userInput.value = newInput;
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const addVerseButtons = document.querySelectorAll('.add-verse');
+            addVerseButtons.forEach(button => {
+                button.addEventListener('click', addVerse);
+            });
+        });
+
+        function toggleChapterSummary(book) {
+            const summaryDiv = document.getElementById('chapter-summary');
+            const summaryText = document.getElementById('summary-text');
+            
+            if (summaryDiv.style.display === "none" || summaryDiv.style.display === "") {
+                summaryDiv.style.display = "block";
+                // Fetch summary from server
+                fetch(`/book_summary?book=${book}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        summaryText.textContent = data.summary || 'Summary not available.';
+                    })
+                    .catch(error => {
+                        console.error('Error fetching book summary:', error);
+                        summaryText.textContent = 'Error loading summary.';
+                    });
+            } else {
+                summaryDiv.style.display = "none";
+            }
+        }
+        
+        function findPeopleInText(text) {
+            fetch('/static/people.json')
+                .then(response => response.json())
+                .then(people => {
+                    const peopleCards = document.getElementById('people-cards');
+                    peopleCards.innerHTML = '';
+                    
+                    people.forEach(person => {
+                        if (text.includes(person.person_name)) {
+                            const card = document.createElement('div');
+                            card.className = 'person-card';
+                            card.innerHTML = `
+                                <img src="/static/database/images/${person.person_name.toLowerCase()}.jpg" 
+                                     alt="${person.person_name}" 
+                                     class="person-image"
+                                     onerror="this.src='/static/database/images/default.jpg'">
+                                <h3>${person.person_name}</h3>
+                            `;
+                            
+                            card.addEventListener('click', () => {
+                                const overlay = document.createElement('div');
+                                overlay.className = 'popup-overlay';
+                                
+                                const popup = document.createElement('div');
+                                popup.className = 'person-popup';
+                                popup.innerHTML = `
+                                    <div class="popup-inner">
+                                        <div class="popup-border"></div>
+                                        <img src="/static/database/images/${person.person_name.toLowerCase()}.jpg" 
+                                             alt="${person.person_name}" 
+                                             class="person-image"
+                                             onerror="this.src='/static/database/images/default.jpg'">
+                                        <h3>${person.person_name}</h3>
+                                        <p>${person.description}</p>
+                                    </div>
+                                `;
+                                
+                                document.body.appendChild(overlay);
+                                document.body.appendChild(popup);
+                                
+                                // Prevent clicks on the popup from closing it
+                                popup.addEventListener('click', (e) => {
+                                    e.stopPropagation();
+                                });
+                                
+                                // Close on overlay click or close button click
+                                const closePopup = () => {
+                                    overlay.remove();
+                                    popup.remove();
+                                };
+                                
+                                overlay.addEventListener('click', closePopup);
+                                popup.querySelector('.close-person-popup').addEventListener('click', closePopup);
+                            });
+                            
+                            peopleCards.appendChild(card);
+                        }
+                    });
+                })
+                .catch(error => console.error('Error loading people data:', error));
+        }
+
+    </script>
+
+    <style>
+
+.theme-pills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin: 0.5rem 0;
+        }
+
+        .theme-pill {
+            background-color: #efebff;
+            color: #374151;
+            padding: 0.25rem 0.75rem;
+            border-radius: 4px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            display: inline-block;
+        }
+
+.people-cards {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .person-card {
+            background-color: #ffffff;
+            /* border-radius: 0.5rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); */
+            /* padding: 1rem; */
+            width: 100px;
+            transition: transform 0.2s;
+            cursor: pointer;
+            text-align: center;
+            /* border: 2px solid #2a325a; */
+        }
+
+        .person-card:hover {
+            transform: translateY(-2px);
+            /* border-color: #3b82f6; */
+        }
+
+        .person-card h3 {
+            margin: 0.5rem 0;
+            color: #2f2f2f;
+            font-size: 1rem;
+            font-weight: 300;
+        }
+
+        .person-image {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            margin: 0 auto;
+            object-fit: cover;
+            /* border: 3px solid #3b82f6; */
+        }
+
+        .popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 999;
+            cursor: pointer;
+        }
+
+        .person-popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1000;
+            width: 300px;
+            background: #1a2d4d;
+            /* border-radius: 15px; */
+            padding: 4px;
+            font-family: serif;
+            color: #fff;
+            overflow: hidden;
+            cursor: default;
+        }
+
+        .popup-inner {
+            position: relative;
+            background: white;
+            /* border-radius: 12px; */
+            padding: 2rem;
+            border: 2px solid #64b2cd;
+        }
+
+        .popup-border {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border: 8px solid transparent;
+            border-image: linear-gradient(45deg, #64b2cd, #387a9c) 1;
+            pointer-events: none;
+        }
+
+        .popup-ornaments {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 40px;
+            background: #64b2cd;
+            clip-path: path('M 0,0 L 300,0 L 300,20 Q 150,40 0,20 Z');
+            opacity: 0.3;
+        }
+
+        .close-person-popup {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 24px;
+            height: 24px;
+            background: #1a2d4d;
+            border: none;
+            border-radius: 50%;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+
+        .person-popup h3 {
+            text-align: center;
+            font-size: 24px;
+            color: #1a2d4d;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+
+        .person-popup p {
+            color: #1a2d4d;
+            font-size: 14px;
+            line-height: 1.5;
+            text-align: center;
+        }
+
+        .person-popup .person-image {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            border: 3px solid #64b2cd;
+            margin: 0 auto 15px;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div id="mySidebar" class="left-sidebar">
+        <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">Close</a>
+        <div class="sidebar-container">
+        <h4>This Week's Verses</h4>
+        {% for query in recent_queries %}
+            <a href="{{ url_for('query', reference=query) }}">{{ query }}</a><br>
+        {% endfor %}
+        <h4>Language</h4>
+        <p id="btn-en" class="{% if session.get('lang') == 'en' %}active{% endif %}" style="cursor: pointer; background: none; padding: 2px;">English</p>
+        <p href id="btn-ko" class="{% if session.get('lang') == 'ko' %}active{% endif %}"style="cursor: pointer; background: none; padding: 2px;">한글 (Korean)</p>
+        <p href id="btn-mal" class="{% if session.get('lang') == 'mal' %}active{% endif %}"style="cursor: pointer; background: none; padding: 2px;">മലയാളം (Malayalam)</p>
+        <p href id="btn-ne" class="{% if session.get('lang') == 'ne' %}active{% endif %}"style="cursor: pointer; background: none; padding: 2px;">नेपाली (Nepali)</p>
+        <h4>About & Feedback</h4>
+        <p><a href="/support_en">About</a></p>
+        </div>
+    </div>
+
+    <div class="header-container">
+        <button class="openbtn" onclick="openNav()"><i class="fa-solid fa-bars-staggered" onclick="event.stopPropagation(); openNav();"></i></button>
+        <!-- {% if first_visit %} -->
+        <span class="hand-pointing-left">👈</span>
+        <!-- {% endif %} -->
+        <h1>Bible Reference</h1>
+    </div>
+    <div class="line-loader" id="lineLoader"></div>
+    <div class="container">
+        <!-- <div class="btn-group">
+            <button id="btn-en" class="{% if session.get('lang') == 'en' %}active{% endif %}">EN</button>
+            <button id="btn-ko" class="{% if session.get('lang') == 'ko' %}active{% endif %}">한글</button>
+            <button id="btn-ne" class="{% if session.get('lang') == 'ne' %}active{% endif %}">नेपाली</button>
+            <button id="btn-mal" class="{% if session.get('lang') == 'mal' %}active{% endif %}">മലയാളം</button>
+        </div> -->
+        <!-- <h1>Bible Reference</h1> -->
+        <form method="POST">
+            <label for="reference">Search your Bible for:</label>
+            <input class="no-underline user-input" type="text" id="reference" name="reference" value="{{ user_input if user_input else '' }}" placeholder="Matthew 2:3 to 5 OR Where was Paul's trial held">
+            <input type="hidden" name="language" value="en">  <!-- Hidden input for language -->
+            <button class="submit-button" type="submit">Submit</button>
+        </form>
+
+  
+        {% if response %}
+            {% if response.error %}
+                <h2>Error:</h2>
+                <pre>{{ response.error }}</pre>
+            {% else %}
+            <div class="icon-title-container">
+                <!-- <span class="icon"><i class="fa-regular fa-bookmark"></i></span>     -->
+                <h2 class="no-underline requested-reference">{{ response.requested_reference }}</h2>
+                <!-- {% if response.requested_reference %}
+                {% set book = response.requested_reference.split()[0] %}
+                <div class="chapter-summary-container">
+                    <button class="button-toggle" onclick="toggleChapterSummary('{{ book }}')">
+                        <i class="fas fa-chevron-down"></i> Book Summary
+                    </button>
+                    <div id="chapter-summary" class="collapse-content card-content">
+                        <div id="summary-text">Loading...</div>
+                    </div>
+                </div>
+                {% endif %} -->
+            </div>
+
+                <div class="passage">
+                    <div class="passage-inside" id="passageInside">
+                        {% for verse in response.retrieved_passages %}
+                            {% if verse.text.startswith('¶') %}
+                                <br><span class="verse-num bible-verse" data-book="{{ response.book }}" data-chapter="{{ response.chapter }}" data-verse="{{ verse.verse_num }}">{{ verse.verse_num }}</span>
+                                <span class="verse-text">{{ verse.text | replace('¶', '', 1) }}</span>
+                            {% else %}
+                                <span class="verse-num bible-verse" data-book="{{ response.book }}" data-chapter="{{ response.chapter }}" data-verse="{{ verse.verse_num }}">{{ verse.verse_num }}</span>
+                                <span class="verse-text">{{ verse.text }}</span>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+                <!-- <h2>Main theme(s)</h2> -->
+                    <div class="theme-pills">
+                </div>
+                
+                {% if response.requested_reference %}
+                {% set reference_parts = response.requested_reference.split() %}
+                {% set book = reference_parts[1] if reference_parts[0] in ['I', 'II', 'III'] else reference_parts[0] %}
+                {% set full_book = reference_parts[0] + ' ' + reference_parts[1] if reference_parts[0] in ['I', 'II', 'III'] else reference_parts[0] %}
+                {% set chapter_part = reference_parts[-1] if reference_parts|length > 1 else '1' %}
+                {% set chapter = chapter_part.split(':')[0] %}
+                <h2>Background: <span id="section-title"></span></h2>
+                <div class="analysis-section">
+                    <div class="book-summary-container">
+                        <pre id="summary-text" class="card-content">Loading...</pre>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Add the people cards section -->
+                <div id="people-cards" class="people-cards"></div>
+
+                <!-- Locations section -->
+                <h2> Locations </h2>
+                <div class="analysis-section">
+                    <div id="map" style="height: 400px; width: 100%;"></div>
+                </div>
+
+
+                <h2>Explanation of the passage</h2>
+                <div class ="analysis-section">
+                    <pre id="explanation1"></pre>  
+                    {% if not response.analysis%}
+                    <form method="POST">
+                        <input type="hidden" name="reference" value="{{ user_input | e }}">
+                        <button type="submit" style="margin-bottom: 1rem;">Retry</button>
+                        <span><br>Our servers are loaded, click on the Retry button.</span><br>
+                        <span>Please read more about our <a href="/support_en">development efforts</a></span>
+                    </form>
+                {% endif %}     
+                </div>   
+
+                <h2>Further Reading</h2>
+                <div class ="analysis-section">
+                    <pre id="related-verses">{{response.related_verses}}</pre>
+                    <!-- <script>
+                        document.addEventListener('DOMContentLoaded', function() {
+                            const relatedVersesElement = document.getElementById('related-verses');
+                            if (relatedVersesElement) {
+                                const analysisText = relatedVersesElement.textContent;
+                                const relatedVersesMatch = analysisText.match(/Related Bible verses include:\n\n([\s\S]*)/);
+    
+                                let relatedVerses = '';
+                                if (relatedVersesMatch && relatedVersesMatch[1]) {
+                                    relatedVerses = relatedVersesMatch[1].trim();
+                                }
+    
+                                // You can now use the 'relatedVerses' variable as needed.
+                                // For example, to display it in the console:
+                                console.log(relatedVerses);
+    
+                                // Or to update another element on the page:
+                                // document.getElementById('some-other-element-id').textContent = relatedVerses;
+                            }
+                        });
+                    </script> -->
+                    {% if not response.related_verses %}
+                    <form method="POST">
+                        <input type="hidden" name="reference" value="{{ user_input | e }}">
+                        <button type="submit">Retry</button>
+                    </form>
+                {% endif %}
+            {% endif %}
+        {% endif %}
+        </div>
+    </div>
+    <script>
+        function openNav() {
+            document.getElementById("mySidebar").style.width = "250px";
+            document.getElementById("main").style.marginLeft = "250px";
+        }
+
+        function closeNav() {
+            document.getElementById("mySidebar").style.width = "0";
+            document.getElementById("main").style.marginLeft= "0";
+        }
+
+        // Close the sidebar if the user clicks outside of it
+        document.addEventListener('click', function(event) {
+            var sidebar = document.getElementById("mySidebar");
+            if (sidebar.style.width === "250px" && !sidebar.contains(event.target) && !event.target.classList.contains('openbtn')) {
+                closeNav();
+            }
+        });
+
+        function setLanguage(lang) {
+            fetch(`/set_language?lang=${lang}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    }
+                });
+        }
+
+        function showLoader() {
+            var loader = document.getElementById("lineLoader");
+            loader.style.width = "100%";
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const passageInside = document.getElementById('passageInside');
+            const maxHeight = window.innerHeight * 0.34; // Calculate 44vh in pixels
+            if (passageInside.scrollHeight > maxHeight) {
+                passageInside.classList.add('with-shadow');
+            } else {
+                passageInside.classList.remove('with-shadow');
+            }
+        });
+
+    </script>
+    <div class="bottom-menu">
+        <a href="{{ url_for('home') }}">
+            <span class="icon active"><i class="fa-solid fa-church"></i></span>
+            <span class="menu-name active">Sermon</span>
+        </a>
+        <a href="{{ url_for('books') }}">
+            <span class="icon"><i class="fa-solid fa-book-open"></i></span>
+            <span class="menu-name">Bible</span>
+        </a>
+        <a href="{{ url_for('devotionals') }}">
+            <span class="icon"><i class="fa-solid fa-star-of-life"></i></span>
+            <span class="menu-name">Pray</span>
+        </a>
+    </div>
+    <footer>
+        <!-- <a href="/support_en"> About</a> -->
+    </footer>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const analysisText = `{{response.analysis | safe}}`;
+            console.log("Analysis text:", analysisText);
+
+            // Themes extraction
+            const themesMatch = analysisText.match(/1\.\s*(?:Key themes:)?\s*(.*?)(?:\n2\.|\n3\:|$)/s);
+            if (themesMatch) {
+                const themes = themesMatch[1].split(', ');
+                const pillsContainer = document.querySelector('.theme-pills');
+                themes.forEach(theme => {
+                    const pill = document.createElement('span');
+                    pill.className = 'theme-pill';
+                    pill.textContent = theme.trim();
+                    pillsContainer.appendChild(pill);
+                });
+            } else {
+                console.log("No themes match found");
+            }
+
+            // Background extraction
+            const background = analysisText.match(/4\.\s*(?:Background:)?\s*(.*?)(?:\n|$)/s);
+            if (background && background[1]) {
+                document.getElementById('summary-text').textContent = background[1].trim();
+            } else {
+                console.log('Background match not found or empty.');
+            }
+
+            // Extract locations from analysis and initialize map
+            const locationsMatch = analysisText.match(/5\.\s*(.*?)(?:\n|$)/s);
+            if (locationsMatch && locationsMatch[1]) {
+                const locations = locationsMatch[1].split(',').map(loc => loc.trim()).filter(loc => loc.length > 0);
+                if (locations.length > 0) {
+                    // Store locations and set callback for map initialization
+                    window.mapLocations = locations;
+                    if (typeof google !== 'undefined' && google.maps) {
+                        initMap(window.mapLocations);
+                    } else {
+                        // If Google Maps API is not yet loaded, wait for it
+                        window.initMapCallback = () => initMap(window.mapLocations);
+                    }
+                }
+            }
+
+
+
+            // Explanation extraction
+            const explanationMatch = analysisText.match(/2\. (?:Explanation:\s*)?(.*?)(?:\n3\.|\$)/s);
+            let explanation = '';
+            if (explanationMatch && explanationMatch[1]) {
+                explanation = explanationMatch[1].trim();
+                const explanationElem = document.getElementById('explanation');
+                if (explanationElem) explanationElem.textContent = explanation;
+                console.log('extracted explanation:', explanation);
+            } else {
+                console.log('Explanation match not found or empty.');
+            }
+            document.getElementById('explanation1').innerHTML = explanation;
+
+            underlineBibleVerses('related-verses');
+        });
+    </script>
+
+        <script>
+            function initMap(locations) {
+                const geocoder = new google.maps.Geocoder();
+                const map = new google.maps.Map(document.getElementById('map'), {
+                    zoom: 8
+                });
+                const bounds = new google.maps.LatLngBounds();
+                let processedCount = 0;
+
+                if (!locations || locations.length === 0) return;
+
+                locations.forEach(location => {
+                    geocoder.geocode({ address: location }, (results, status) => {
+                        if (status === 'OK') {
+                            new google.maps.Marker({
+                                map: map,
+                                position: results[0].geometry.location,
+                                title: location
+                            });
+                            bounds.extend(results[0].geometry.location);
+                        }
+                        processedCount++;
+                        if (processedCount === locations.length) {
+                            if (locations.length > 0) {
+                                map.fitBounds(bounds);
+                                if (map.getZoom() > 15) { // Prevent zooming in too much for single markers
+                                    map.setZoom(15);
+                                }
+                            }
+                        }
+                    });
+                });
+            }
+        </script>
+    </body>
+</html>

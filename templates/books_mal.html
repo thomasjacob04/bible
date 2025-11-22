@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="ml">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ബൈബിൾ</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <div class="header">
+        <div class="title">ബൈബിൾ</div>
+        {% if selected_book %}
+            <div id="breadcrumb" class="breadcrumb">
+                <span id="selected-book">{{ selected_book }}</span> > <span id="selected-chapter">അധ്യായം 1</span>
+            </div>
+        </div>
+    <div class="container">
+            <div class="books-columns">
+                <div class="column">
+                    <h2>{{ selected_book }}</h2>
+                    <div id="chapters">
+                        {% if chapters %}
+                            {% for chapter_num, verses in chapters.items() %}
+                                <div id="chapter-{{ chapter_num }}" class="chapter">
+                                    <h3>{{ chapter_num }} അധ്യായം</h3>
+                                    {% if first_visit %}
+                                    <span class="hand-pointing">👇</span>
+                                    {% endif %}
+                                    <div class="verses">
+                                        {% for verse in verses %}
+                                            <p>{{ verse|safe }}</p>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <p>No chapters available for this book.</p>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="sidebar">
+                    <ul>
+                        {% for chapter in range(1, total_chapters + 1) %}
+                            <li><a href="#chapter-{{ chapter }}" onclick="loadChapter({{ chapter }}); adjustScroll(event, {{ chapter }});">{{ chapter }}</a></li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        {% else %}
+            <div class="testaments-columns">
+                <div class="testament-column">
+                    <h2>പഴയ നിയമം</h2>
+                    <ul>
+                        {% for book in books['Old Testament'] %}
+                            <li class="book"><a href="{{ url_for('book_chapters_mal', book_name=book) }}">{{ book }}</a></li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                <div class="testament-column">
+                    <h2>പുതിയ നിയമം</h2>
+                    <ul>
+                        {% for book in books['New Testament'] %}
+                            <li class="book"><a href="{{ url_for('book_chapters_mal', book_name=book) }}">{{ book }}</a></li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+    <div id="bottom-sheet" class="bottom-sheet" onclick="redirectToHome()">
+        <div class="bottom-sheet-content">
+            <span id="analyse-text"></span>
+        </div>
+    </div>
+    <div class="bottom-menu">
+        <a href="{{ url_for('home_mal') }}">
+            <span class="icon"><i class="fa-solid fa-church"></i></span>
+        </a>
+        <a href="{{ url_for('books_mal') }}">
+            <span class="icon active"><i class="fa-solid fa-book-open"></i></a></span>
+        </a>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const totalChapters = parseInt('{{ total_chapters }}');
+
+            document.querySelectorAll('.verses p').forEach(verse => {
+                verse.addEventListener('click', function() {
+                    const verseNumber = Array.from(this.parentNode.children).indexOf(this) + 1;
+                    const verseText = this.textContent;
+                    const chapter = this.closest('.chapter').id.split('-')[1];
+                    const book = '{{ selected_book }}';
+                    document.getElementById('analyse-text').textContent = `കൂടുതൽ… ${book} ${chapter} അധ്യായം ${verseNumber} വാക്യം`;
+                    openBottomSheet();
+                });
+            });
+
+            restoreSession();
+
+            window.addEventListener('scroll', updateBreadcrumb);
+        });
+
+        function loadChapter(chapter) {
+            const chapterDiv = document.getElementById(`chapter-${chapter}`);
+            if (chapterDiv && chapterDiv.querySelector('.verses').innerHTML === 'Loading...') {
+                fetch(`/fetch_chapter_mal?book={{ selected_book }}&chapter=${chapter}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        const versesDiv = chapterDiv.querySelector('.verses');
+                        versesDiv.innerHTML = '';
+                        data.verses.forEach(verse => {
+                            const p = document.createElement('p');
+                            p.textContent = verse;
+                            versesDiv.appendChild(p);
+                        });
+                        document.getElementById('selected-chapter').textContent = `അധ്യായം ${chapter}`;
+                    })
+                    .catch(error => {
+                        console.error('Error fetching chapter:', error);
+                    });
+            } else {
+                document.getElementById('selected-chapter').textContent = `അധ്യായം ${chapter}`;
+            }
+        }
+
+        function loadAllChapters(start, end) {
+            for (let i = start; i <= end; i++) {
+                loadChapter(i);
+            }
+        }
+
+        function adjustScroll(event, chapter) {
+            event.preventDefault();
+            const chapterElement = document.getElementById(`chapter-${chapter}`);
+            const offset = 8 * parseFloat(getComputedStyle(document.documentElement).fontSize);
+            const top = chapterElement.getBoundingClientRect().top + window.pageYOffset - offset;
+            window.scrollTo({ top, behavior: 'auto' });
+        }
+
+        function updateBreadcrumb() {
+            const chapters = document.querySelectorAll('.chapter');
+            let currentChapter = 'അധ്യായം 1';
+            chapters.forEach(chapter => {
+                const rect = chapter.getBoundingClientRect();
+                if (rect.top <= window.innerHeight / 2 && rect.bottom >= window.innerHeight / 2) {
+                    currentChapter = chapter.querySelector('h3').textContent;
+                }
+            });
+            document.getElementById('selected-chapter').textContent = currentChapter;
+        }
+
+        function saveSession(book, chapter) {
+            localStorage.setItem('currentBook', book);
+            localStorage.setItem('currentChapter', chapter);
+        }
+
+        function restoreSession() {
+            const book = localStorage.getItem('currentBook');
+            const chapter = localStorage.getItem('currentChapter');
+            if (book && chapter) {
+                document.getElementById('selected-book').textContent = book;
+                document.getElementById('selected-chapter').textContent = `അധ്യായം ${chapter}`;
+                loadChapter(chapter);
+                adjustScroll(null, chapter);
+            }
+        }
+
+        function openBottomSheet() {
+            const bottomSheet = document.getElementById('bottom-sheet');
+            bottomSheet.style.display = 'block';
+            setTimeout(() => {
+                bottomSheet.classList.add('show');
+            }, 10);
+
+            setTimeout(closeBottomSheet, 8000);
+        }
+
+        function closeBottomSheet() {
+            const bottomSheet = document.getElementById('bottom-sheet');
+            bottomSheet.classList.remove('show');
+            setTimeout(() => {
+                bottomSheet.style.display = 'none';
+            }, 500);
+        }
+
+        function redirectToHome() {
+            const analyseText = document.getElementById('analyse-text').textContent;
+            const reference = analyseText.replace('Analyse ', '');
+            window.location.href = `/home_mal?reference=${encodeURIComponent(reference)}`;
+        }
+    </script>
+</body>
+</html>
